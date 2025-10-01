@@ -170,12 +170,12 @@ Press Enter to return to main menu...
    - First number is the row (1-3 from top to bottom)
    - Second number is the column (1-3 from left to right)
 
-2. **CPU Strategy**: The AI follows this priority:
-   - Win if possible
-   - Block opponent from winning
-   - Take center (2 2)
-   - Take corners
-   - Take any available position
+2. **CPU Strategy**: The AI uses balanced difficulty:
+   - Win if possible (50% of the time)
+   - Block opponent from winning (30% of the time)
+   - Take center (40% of the time)
+   - Take corners (30% of the time)
+   - Make random moves (more often for easier gameplay)
 
 3. **Multiplayer Tips**:
    - Room codes are 6 characters long

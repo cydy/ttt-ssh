@@ -69,12 +69,12 @@
 ### 4. CPU AI
 **File**: `pkg/game/ai.go`
 ```
-Decision Tree:
-1. Can I win? → Make winning move
-2. Can opponent win? → Block them
-3. Is center free? → Take center
-4. Are corners free? → Take random corner
-5. Otherwise → Take any available space
+Balanced Difficulty Strategy:
+1. Can I win? → Make winning move (50% of the time)
+2. Can opponent win? → Block them (30% of the time)
+3. Is center free? → Take center (40% of the time)
+4. Are corners free? → Take random corner (30% of the time)
+5. Otherwise → Take any available space (more frequent)
 ```
 
 ### 5. Multiplayer System

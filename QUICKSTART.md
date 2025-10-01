@@ -166,7 +166,7 @@ make clean
 
 ## 🎯 Tips
 
-1. **CPU Strategy**: The AI tries to win first, then blocks, then takes strategic positions
+1. **CPU Strategy**: The AI uses balanced difficulty - sometimes strategic, sometimes random for easier gameplay
 2. **Coordinates**: Remember it's `row col` not `x y`
 3. **Multiplayer**: First player is always X, second player is always O
 4. **Room Codes**: They're short (6 chars) for easy sharing

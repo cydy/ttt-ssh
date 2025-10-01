@@ -44,12 +44,12 @@ Complete list of implemented features and functionality.
 ## ✅ AI Features
 
 ### CPU Opponent Strategy
-- [x] Win detection (take winning move)
-- [x] Block detection (prevent opponent win)
-- [x] Center preference
-- [x] Corner preference
-- [x] Random fallback for equal positions
-- [x] Never loses when playing optimally
+- [x] Win detection (take winning move - 50% of the time)
+- [x] Block detection (prevent opponent win - 30% of the time)
+- [x] Center preference (40% of the time)
+- [x] Corner preference (30% of the time)
+- [x] Random moves (more frequent for balanced difficulty)
+- [x] Balanced difficulty for enjoyable gameplay
 
 ## ✅ Network Features
 

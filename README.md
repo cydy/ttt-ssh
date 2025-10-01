@@ -5,7 +5,7 @@ A text-based Tic-Tac-Toe game accessible via SSH, built with Go. Features both C
 ## Features
 
 - 🎮 **Text-based UI** - Beautiful ASCII art game board
-- 🤖 **CPU Opponent** - Play against an AI with smart move logic
+- 🤖 **CPU Opponent** - Play against an AI with balanced difficulty
 - 👥 **Multiplayer Mode** - Play with friends using room codes
 - 🔐 **SSH Access** - Connect from anywhere using SSH
 - 🐳 **Docker Support** - Easy deployment with Docker
@@ -161,12 +161,12 @@ tictactoe-ssh/
 - Each connection gets its own game session
 
 ### CPU AI
-- Smart move algorithm:
-  1. Try to win if possible
-  2. Block opponent from winning
-  3. Take center if available
-  4. Take corners
-  5. Take any available position
+- Balanced difficulty algorithm:
+  1. Try to win (50% of the time)
+  2. Block opponent from winning (30% of the time)
+  3. Take center if available (40% of the time)
+  4. Take corners (30% of the time)
+  5. Make random moves (more often for easier gameplay)
 
 ### Multiplayer
 - Room-based system with 6-character codes

@@ -51,12 +51,12 @@ Total: ~748 lines of production code (excluding tests and docs)
 
 ### 1. CPU Opponent
 - Player is X, CPU is O
-- AI uses minimax-inspired strategy:
-  1. Try to win immediately
-  2. Block opponent from winning
-  3. Take center position
-  4. Take corner positions
-  5. Take any available space
+- AI uses balanced difficulty strategy:
+  1. Try to win (50% of the time)
+  2. Block opponent from winning (30% of the time)
+  3. Take center position (40% of the time)
+  4. Take corner positions (30% of the time)
+  5. Make random moves (more often for easier gameplay)
 
 ### 2. Multiplayer
 - First player creates room, gets unique code
