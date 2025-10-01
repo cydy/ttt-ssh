@@ -1,0 +1,9 @@
+services:
+  tictactoe:
+    build: .
+    ports:
+      - "2222:2222"
+    environment:
+      - SSH_PORT=2222
+    restart: unless-stopped
+    container_name: tictactoe-ssh
