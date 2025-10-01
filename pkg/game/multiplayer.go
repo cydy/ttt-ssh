@@ -16,6 +16,9 @@ type Room struct {
 	GameOver bool
 	Winner   Cell
 	mutex    sync.Mutex
+	// opponentJoined is closed exactly once when Player2 successfully joins
+	opponentJoined chan struct{}
+	opponentJoinedOnce sync.Once
 }
 
 type Player struct {
@@ -41,6 +44,7 @@ func (rm *RoomManager) CreateRoom() *Room {
 		ID:      generateRoomCode(),
 		Board:   NewBoard(),
 		Current: X,
+		opponentJoined: make(chan struct{}),
 	}
 	rm.rooms[room.ID] = room
 	return room
@@ -83,9 +87,17 @@ func (r *Room) AssignPlayer(player *Player) (Cell, error) {
 	} else if r.Player2 == nil {
 		r.Player2 = player
 		player.Symbol = O
+		// Signal that the opponent has joined. Safe to call multiple times via Once.
+		r.opponentJoinedOnce.Do(func() { close(r.opponentJoined) })
 		return O, nil
 	}
 	return Empty, fmt.Errorf("room is full")
+}
+
+// OpponentJoined returns a channel that is closed when Player2 joins the room.
+// Callers can select on this to be notified without busy-waiting.
+func (r *Room) OpponentJoined() <-chan struct{} {
+	return r.opponentJoined
 }
 
 func (r *Room) MakeMove(pos int, player Cell) error {

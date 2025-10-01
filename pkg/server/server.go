@@ -147,17 +147,15 @@ func createMultiplayerRoom(s ssh.Session, reader *bufio.Reader) {
 	fmt.Fprintf(s, "You are: %s\n", symbol.String())
 	fmt.Fprintf(s, "Waiting for opponent to join...\n")
 
-	// Wait for second player
-	go func() {
-		for room.Player2 == nil {
-			// Busy wait - in production, use a channel or condition variable
-		}
-		player.Output <- "Opponent joined!"
-	}()
-
-	// Wait for opponent message
-	msg := <-player.Output
-	fmt.Fprintf(s, "\n%s\n", msg)
+	// Wait for second player or session cancellation to avoid busy-waiting/leaks
+	select {
+	case <-room.OpponentJoined():
+		fmt.Fprintf(s, "\nOpponent joined!\n")
+	case <-s.Context().Done():
+		// Creating player disconnected; clean up room and exit
+		game.GlobalRoomManager.RemoveRoom(room.ID)
+		return
+	}
 
 	playMultiplayer(s, reader, room, player)
 }
