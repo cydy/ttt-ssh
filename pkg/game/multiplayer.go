@@ -17,7 +17,7 @@ type Room struct {
 	Winner   Cell
 	mutex    sync.Mutex
 	// opponentJoined is closed exactly once when Player2 successfully joins
-	opponentJoined chan struct{}
+	opponentJoined     chan struct{}
 	opponentJoinedOnce sync.Once
 	// moveNotifier is used to signal when a move has been made
 	moveNotifier chan struct{}
@@ -43,11 +43,11 @@ func (rm *RoomManager) CreateRoom() *Room {
 	defer rm.mutex.Unlock()
 
 	room := &Room{
-		ID:      generateRoomCode(),
-		Board:   NewBoard(),
-		Current: X,
+		ID:             generateRoomCode(),
+		Board:          NewBoard(),
+		Current:        X,
 		opponentJoined: make(chan struct{}),
-		moveNotifier: make(chan struct{}, 1),
+		moveNotifier:   make(chan struct{}, 1),
 	}
 	rm.rooms[room.ID] = room
 	return room
@@ -155,8 +155,8 @@ func (r *Room) GetStatus() string {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
-	status := fmt.Sprintf("Room: %s\n", r.ID)
-	status += fmt.Sprintf("Players: ")
+	status := "Room: " + r.ID + "\n"
+	status += "Players: "
 	if r.Player1 != nil {
 		status += "X "
 	}
@@ -164,7 +164,7 @@ func (r *Room) GetStatus() string {
 		status += "O"
 	}
 	status += "\n"
-	
+
 	if !r.GameOver {
 		status += fmt.Sprintf("Current turn: %s\n", r.Current.String())
 	} else {
@@ -174,7 +174,7 @@ func (r *Room) GetStatus() string {
 			status += "Draw!\n"
 		}
 	}
-	
+
 	return status
 }
 

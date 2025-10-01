@@ -5,7 +5,7 @@ This document provides examples of how to play SSH Tic-Tac-Toe.
 ## Example 1: Playing Against CPU
 
 ```
-$ ssh -p 2222 localhost
+$ ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 
 ╔════════════════════════════════════╗
 ║   Welcome to SSH Tic-Tac-Toe!     ║
@@ -64,7 +64,7 @@ Your turn (X): 1 2
 
 **Player 1:**
 ```
-$ ssh -p 2222 localhost
+$ ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 
 Choose game mode:
 1. Play against CPU
@@ -99,7 +99,7 @@ Your turn (X): 2 2
 
 **Player 2:**
 ```
-$ ssh -p 2222 localhost
+$ ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 
 Choose game mode:
 1. Play against CPU

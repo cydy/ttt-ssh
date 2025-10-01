@@ -42,7 +42,7 @@ docker-compose ps
 
 #### Step 4: Connect and play!
 ```bash
-ssh -p 2222 localhost
+ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 ```
 
 #### Stop the server
@@ -98,7 +98,7 @@ chmod +x run.sh
 
 #### Step 6: Connect and play!
 ```bash
-ssh -p 2222 localhost
+ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 ```
 
 ---
@@ -190,7 +190,7 @@ go build -o tictactoe-ssh.exe .
 
 Connect using:
 ```powershell
-ssh -p 2222 localhost
+ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 ```
 
 Or use PuTTY:
@@ -336,7 +336,7 @@ netstat -tulpn | grep 2222
 lsof -i :2222
 
 # Test connection
-ssh -p 2222 localhost
+ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 ```
 
 ### View logs

@@ -24,7 +24,7 @@ make docker-run
 
 Connect to the game:
 ```bash
-ssh -p 2222 localhost
+ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 ```
 
 ## Manual Setup
@@ -57,7 +57,7 @@ go build -o tictactoe-ssh .
 
 ```bash
 # Connect to localhost (default port 2222)
-ssh -p 2222 localhost
+ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 
 # Connect to a remote server
 ssh -p 2222 username@your-server.com

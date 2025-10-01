@@ -15,18 +15,17 @@ COPY . .
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o tictactoe-ssh .
 
-# Final stage
-FROM alpine:latest
+# Final stage - scratch base for minimal container
+FROM scratch
 
-RUN apk --no-cache add ca-certificates
-
-WORKDIR /root/
+# Copy ca-certificates from alpine
+COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # Copy the binary from builder
-COPY --from=builder /app/tictactoe-ssh .
+COPY --from=builder /app/tictactoe-ssh /tictactoe-ssh
 
 # Expose SSH port
 EXPOSE 2222
 
 # Run the application
-CMD ["./tictactoe-ssh"]
+CMD ["/tictactoe-ssh"]

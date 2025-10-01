@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bufio"
 	"crypto/ed25519"
 	"crypto/rand"
 	"fmt"
@@ -46,9 +45,6 @@ func handleSession(s ssh.Session) {
 
 	showWelcome(s)
 
-	// Create a reader for the session
-	reader := bufio.NewReader(s)
-
 	for {
 		// Check if session is still active
 		select {
@@ -77,11 +73,11 @@ func handleSession(s ssh.Session) {
 
 		switch choice {
 		case "1":
-			playCPU(s, reader)
+			playCPU(s)
 		case "2":
-			createMultiplayerRoom(s, reader)
+			createMultiplayerRoom(s)
 		case "3":
-			joinMultiplayerRoom(s, reader)
+			joinMultiplayerRoom(s)
 		case "4":
 			fmt.Fprintf(s, "\nThanks for playing! Goodbye!\n")
 			return
@@ -140,7 +136,7 @@ func readInputWithEcho(s ssh.Session, prompt string) (string, error) {
 	}
 }
 
-func playCPU(s ssh.Session, reader *bufio.Reader) {
+func playCPU(s ssh.Session) {
 	board := game.NewBoard()
 	ai := game.NewAI(game.O)
 	playerSymbol := game.X
@@ -206,7 +202,7 @@ func playCPU(s ssh.Session, reader *bufio.Reader) {
 	readInputWithEcho(s, "\nPress Enter to return to main menu...")
 }
 
-func createMultiplayerRoom(s ssh.Session, reader *bufio.Reader) {
+func createMultiplayerRoom(s ssh.Session) {
 	room := game.GlobalRoomManager.CreateRoom()
 
 	player := &game.Player{
@@ -231,10 +227,10 @@ func createMultiplayerRoom(s ssh.Session, reader *bufio.Reader) {
 		return
 	}
 
-	playMultiplayer(s, reader, room, player)
+	playMultiplayer(s, room, player)
 }
 
-func joinMultiplayerRoom(s ssh.Session, reader *bufio.Reader) {
+func joinMultiplayerRoom(s ssh.Session) {
 	code, err := readInputWithEcho(s, "\nEnter room code: ")
 	if err != nil {
 		return
@@ -262,10 +258,10 @@ func joinMultiplayerRoom(s ssh.Session, reader *bufio.Reader) {
 	fmt.Fprintf(s, "\n=== Joined Room %s ===\n", room.ID)
 	fmt.Fprintf(s, "You are: %s\n", symbol.String())
 
-	playMultiplayer(s, reader, room, player)
+	playMultiplayer(s, room, player)
 }
 
-func playMultiplayer(s ssh.Session, reader *bufio.Reader, room *game.Room, player *game.Player) {
+func playMultiplayer(s ssh.Session, room *game.Room, player *game.Player) {
 	defer game.GlobalRoomManager.RemoveRoom(room.ID)
 
 	fmt.Fprintf(s, "\nEnter moves as: row col (e.g., '1 2' for row 1, column 2)\n")
@@ -278,11 +274,12 @@ func playMultiplayer(s ssh.Session, reader *bufio.Reader, room *game.Room, playe
 		current, gameOver, winner := room.GetGameState()
 
 		if gameOver {
-			if winner == player.Symbol {
+			switch winner {
+			case player.Symbol:
 				fmt.Fprintf(s, "\n🎉 Congratulations! You won!\n")
-			} else if winner == game.Empty {
+			case game.Empty:
 				fmt.Fprintf(s, "\n🤝 It's a draw!\n")
-			} else {
+			default:
 				fmt.Fprintf(s, "\n😢 You lost! Better luck next time.\n")
 			}
 			break

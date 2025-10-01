@@ -9,7 +9,7 @@ PROJECT SUCCESSFULLY CREATED!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✓ Text UI Game - Beautiful ASCII art board with box-drawing characters
-✓ SSH Access - Connect via ssh -p 2222 localhost
+✓ SSH Access - Connect via ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 ✓ CPU Opponent - Smart AI with strategic move logic
 ✓ Multiplayer Mode - Room-based system with 6-character codes
 ✓ Simple Setup - One command with Docker or Go
@@ -78,16 +78,16 @@ FEATURES:
 
 METHOD 1: Docker (Recommended)
   $ docker-compose up -d
-  $ ssh -p 2222 localhost
+  $ ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 
 METHOD 2: Go
   $ ./run.sh
-  $ ssh -p 2222 localhost
+  $ ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 
 METHOD 3: Build and Run
   $ go build -o tictactoe-ssh .
   $ ./tictactoe-ssh
-  $ ssh -p 2222 localhost
+  $ ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎮 GAME FEATURES
@@ -266,7 +266,7 @@ This project demonstrates:
 
 Start with:  INDEX.md or QUICKSTART.md
 Install:     INSTALL.md
-Play:        ssh -p 2222 localhost
+Play:        ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 
 Have fun! 🎮
 

@@ -11,7 +11,7 @@ Get up and running with SSH Tic-Tac-Toe in minutes!
 docker-compose up -d
 
 # Connect and play
-ssh -p 2222 localhost
+ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 ```
 
 That's it! The game is now running on port 2222.
@@ -38,7 +38,7 @@ go run main.go
 ### 1. Connect via SSH
 
 ```bash
-ssh -p 2222 localhost
+ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost
 ```
 
 ### 2. Choose Your Game Mode

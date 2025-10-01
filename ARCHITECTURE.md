@@ -5,7 +5,7 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     SSH Clients                         │
-│  (ssh -p 2222 localhost from multiple terminals)       │
+│  (ssh -p 2222 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null localhost from multiple terminals)       │
 └────────────────────┬────────────────────────────────────┘
                      │
                      ▼
