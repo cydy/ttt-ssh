@@ -19,6 +19,8 @@ type Room struct {
 	// opponentJoined is closed exactly once when Player2 successfully joins
 	opponentJoined chan struct{}
 	opponentJoinedOnce sync.Once
+	// moveNotifier is used to signal when a move has been made
+	moveNotifier chan struct{}
 }
 
 type Player struct {
@@ -45,6 +47,7 @@ func (rm *RoomManager) CreateRoom() *Room {
 		Board:   NewBoard(),
 		Current: X,
 		opponentJoined: make(chan struct{}),
+		moveNotifier: make(chan struct{}, 1),
 	}
 	rm.rooms[room.ID] = room
 	return room
@@ -100,6 +103,12 @@ func (r *Room) OpponentJoined() <-chan struct{} {
 	return r.opponentJoined
 }
 
+// WaitForMove blocks until a move is made or the context is cancelled.
+// Returns true if a move was made, false if context was cancelled.
+func (r *Room) WaitForMove() <-chan struct{} {
+	return r.moveNotifier
+}
+
 func (r *Room) MakeMove(pos int, player Cell) error {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -132,6 +141,13 @@ func (r *Room) MakeMove(pos int, player Cell) error {
 		}
 	}
 
+	// Notify waiting goroutines that a move has been made
+	select {
+	case r.moveNotifier <- struct{}{}:
+	default:
+		// Channel is full, notification already pending
+	}
+
 	return nil
 }
 
@@ -160,4 +176,11 @@ func (r *Room) GetStatus() string {
 	}
 	
 	return status
+}
+
+// GetGameState returns the current game state (Current, GameOver, Winner) with proper locking
+func (r *Room) GetGameState() (current Cell, gameOver bool, winner Cell) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	return r.Current, r.GameOver, r.Winner
 }

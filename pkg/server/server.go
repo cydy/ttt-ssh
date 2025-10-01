@@ -28,6 +28,13 @@ func handleSession(s ssh.Session) {
 	showWelcome(s)
 	
 	for {
+		// Check if session is still active
+		select {
+		case <-s.Context().Done():
+			return
+		default:
+		}
+
 		fmt.Fprintf(s, "\nChoose game mode:\n")
 		fmt.Fprintf(s, "1. Play against CPU\n")
 		fmt.Fprintf(s, "2. Multiplayer (Create room)\n")
@@ -204,10 +211,13 @@ func playMultiplayer(s ssh.Session, reader *bufio.Reader, room *game.Room, playe
 		fmt.Fprintf(s, "%s\n", room.Board.String())
 		fmt.Fprintf(s, "%s\n", room.GetStatus())
 
-		if room.GameOver {
-			if room.Winner == player.Symbol {
+		// Get game state with proper synchronization
+		current, gameOver, winner := room.GetGameState()
+
+		if gameOver {
+			if winner == player.Symbol {
 				fmt.Fprintf(s, "\n🎉 Congratulations! You won!\n")
-			} else if room.Winner == game.Empty {
+			} else if winner == game.Empty {
 				fmt.Fprintf(s, "\n🤝 It's a draw!\n")
 			} else {
 				fmt.Fprintf(s, "\n😢 You lost! Better luck next time.\n")
@@ -215,7 +225,7 @@ func playMultiplayer(s ssh.Session, reader *bufio.Reader, room *game.Room, playe
 			break
 		}
 
-		if room.Current == player.Symbol {
+		if current == player.Symbol {
 			fmt.Fprintf(s, "\nYour turn (%s): ", player.Symbol.String())
 			input, err := reader.ReadString('\n')
 			if err != nil {
@@ -236,12 +246,13 @@ func playMultiplayer(s ssh.Session, reader *bufio.Reader, room *game.Room, playe
 		} else {
 			fmt.Fprintf(s, "\nWaiting for opponent's move...\n")
 			
-			// Poll for opponent's move
-			currentBoard := room.Board.String()
-			for {
-				if room.Board.String() != currentBoard || room.GameOver {
-					break
-				}
+			// Wait for opponent's move using channel-based synchronization
+			select {
+			case <-room.WaitForMove():
+				// Move was made, continue to next iteration
+			case <-s.Context().Done():
+				// Session disconnected
+				return
 			}
 		}
 	}
