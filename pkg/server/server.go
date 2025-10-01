@@ -2,6 +2,8 @@ package server
 
 import (
 	"bufio"
+	"crypto/ed25519"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"strconv"
@@ -10,6 +12,7 @@ import (
 	"tictactoe-ssh/pkg/game"
 
 	"github.com/gliderlabs/ssh"
+	gossh "golang.org/x/crypto/ssh"
 )
 
 func Start(port string) error {
@@ -17,16 +20,35 @@ func Start(port string) error {
 		handleSession(s)
 	})
 
-	return ssh.ListenAndServe(":"+port, nil)
+	// Generate ed25519 host key
+	_, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return fmt.Errorf("failed to generate ed25519 key: %v", err)
+	}
+
+	// Convert to SSH format
+	sshPrivateKey, err := gossh.NewSignerFromKey(privateKey)
+	if err != nil {
+		return fmt.Errorf("failed to create SSH signer: %v", err)
+	}
+
+	// Configure SSH server with ed25519 host key
+	server := &ssh.Server{
+		Addr:        ":" + port,
+		HostSigners: []ssh.Signer{sshPrivateKey},
+	}
+
+	return server.ListenAndServe()
 }
 
 func handleSession(s ssh.Session) {
 	defer s.Close()
 
-	reader := bufio.NewReader(s)
-	
 	showWelcome(s)
-	
+
+	// Create a reader for the session
+	reader := bufio.NewReader(s)
+
 	for {
 		// Check if session is still active
 		select {
@@ -40,13 +62,18 @@ func handleSession(s ssh.Session) {
 		fmt.Fprintf(s, "2. Multiplayer (Create room)\n")
 		fmt.Fprintf(s, "3. Multiplayer (Join room)\n")
 		fmt.Fprintf(s, "4. Quit\n")
-		fmt.Fprintf(s, "\nEnter choice (1-4): ")
 
-		choice, err := reader.ReadString('\n')
+		// Read input with echo
+		choice, err := readInputWithEcho(s, "\nEnter choice (1-4): ")
 		if err != nil {
-			return
+			// Check if session is still active
+			select {
+			case <-s.Context().Done():
+				return
+			default:
+				return
+			}
 		}
-		choice = strings.TrimSpace(choice)
 
 		switch choice {
 		case "1":
@@ -69,6 +96,48 @@ func showWelcome(w io.Writer) {
 	fmt.Fprintf(w, "╔════════════════════════════════════╗\n")
 	fmt.Fprintf(w, "║   Welcome to SSH Tic-Tac-Toe!     ║\n")
 	fmt.Fprintf(w, "╚════════════════════════════════════╝\n")
+}
+
+// readInputWithEcho reads input from the session and echoes it back
+func readInputWithEcho(s ssh.Session, prompt string) (string, error) {
+	fmt.Fprint(s, prompt)
+
+	var input strings.Builder
+	buf := make([]byte, 1)
+
+	for {
+		n, err := s.Read(buf)
+		if err != nil || n == 0 {
+			return "", err
+		}
+
+		char := buf[0]
+
+		// Handle different input characters
+		switch char {
+		case '\n', '\r':
+			// End of input
+			fmt.Fprintf(s, "\n")
+			return strings.TrimSpace(input.String()), nil
+		case '\b', 127: // Backspace
+			if input.Len() > 0 {
+				// Remove last character from input buffer
+				str := input.String()
+				input.Reset()
+				input.WriteString(str[:len(str)-1])
+				// Send backspace sequence to terminal for visual feedback
+				fmt.Fprintf(s, "\b \b")
+			}
+		case 3: // Ctrl+C
+			return "", fmt.Errorf("interrupted")
+		default:
+			// Regular character
+			if char >= 32 && char <= 126 { // Printable ASCII
+				input.WriteByte(char)
+				fmt.Fprint(s, string(char))
+			}
+		}
+	}
 }
 
 func playCPU(s ssh.Session, reader *bufio.Reader) {
@@ -99,8 +168,7 @@ func playCPU(s ssh.Session, reader *bufio.Reader) {
 		}
 
 		// Player move
-		fmt.Fprintf(s, "\nYour turn (X): ")
-		input, err := reader.ReadString('\n')
+		input, err := readInputWithEcho(s, "\nYour turn (X): ")
 		if err != nil {
 			return
 		}
@@ -131,24 +199,23 @@ func playCPU(s ssh.Session, reader *bufio.Reader) {
 		// CPU move
 		cpuMove := ai.GetMove(board)
 		board.MakeMove(cpuMove, game.O)
-		row, col := cpuMove/3+1, cpuMove%3+1
-		fmt.Fprintf(s, "\nCPU played: %d %d\n", row, col)
+		cpuRow, cpuCol := cpuMove/3+1, cpuMove%3+1
+		fmt.Fprintf(s, "\nCPU played: %d %d\n", cpuRow, cpuCol)
 	}
 
-	fmt.Fprintf(s, "\nPress Enter to return to main menu...")
-	reader.ReadString('\n')
+	readInputWithEcho(s, "\nPress Enter to return to main menu...")
 }
 
 func createMultiplayerRoom(s ssh.Session, reader *bufio.Reader) {
 	room := game.GlobalRoomManager.CreateRoom()
-	
+
 	player := &game.Player{
 		Input:  make(chan string, 1),
 		Output: make(chan string, 10),
 	}
 
 	symbol, _ := room.AssignPlayer(player)
-	
+
 	fmt.Fprintf(s, "\n=== Multiplayer Room Created ===\n")
 	fmt.Fprintf(s, "Room Code: %s\n", room.ID)
 	fmt.Fprintf(s, "You are: %s\n", symbol.String())
@@ -168,18 +235,15 @@ func createMultiplayerRoom(s ssh.Session, reader *bufio.Reader) {
 }
 
 func joinMultiplayerRoom(s ssh.Session, reader *bufio.Reader) {
-	fmt.Fprintf(s, "\nEnter room code: ")
-	code, err := reader.ReadString('\n')
+	code, err := readInputWithEcho(s, "\nEnter room code: ")
 	if err != nil {
 		return
 	}
-	code = strings.TrimSpace(code)
 
 	room, err := game.GlobalRoomManager.JoinRoom(code)
 	if err != nil {
 		fmt.Fprintf(s, "Error: %s\n", err.Error())
-		fmt.Fprintf(s, "Press Enter to continue...")
-		reader.ReadString('\n')
+		readInputWithEcho(s, "Press Enter to continue...")
 		return
 	}
 
@@ -191,8 +255,7 @@ func joinMultiplayerRoom(s ssh.Session, reader *bufio.Reader) {
 	symbol, err := room.AssignPlayer(player)
 	if err != nil {
 		fmt.Fprintf(s, "Error: %s\n", err.Error())
-		fmt.Fprintf(s, "Press Enter to continue...")
-		reader.ReadString('\n')
+		readInputWithEcho(s, "Press Enter to continue...")
 		return
 	}
 
@@ -226,8 +289,7 @@ func playMultiplayer(s ssh.Session, reader *bufio.Reader, room *game.Room, playe
 		}
 
 		if current == player.Symbol {
-			fmt.Fprintf(s, "\nYour turn (%s): ", player.Symbol.String())
-			input, err := reader.ReadString('\n')
+			input, err := readInputWithEcho(s, fmt.Sprintf("\nYour turn (%s): ", player.Symbol.String()))
 			if err != nil {
 				return
 			}
@@ -245,7 +307,7 @@ func playMultiplayer(s ssh.Session, reader *bufio.Reader, room *game.Room, playe
 			}
 		} else {
 			fmt.Fprintf(s, "\nWaiting for opponent's move...\n")
-			
+
 			// Wait for opponent's move using channel-based synchronization
 			select {
 			case <-room.WaitForMove():
@@ -257,8 +319,7 @@ func playMultiplayer(s ssh.Session, reader *bufio.Reader, room *game.Room, playe
 		}
 	}
 
-	fmt.Fprintf(s, "\nPress Enter to return to main menu...")
-	reader.ReadString('\n')
+	readInputWithEcho(s, "\nPress Enter to return to main menu...")
 }
 
 func parseMove(input string) int {
